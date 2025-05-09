@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Comercial - Neofinanciera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .progress-container {
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+            position: relative;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .editable:focus {
+            outline: 2px solid #14b8a6;
+            border-radius: 4px;
+            padding: 0 2px;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .indicator.success {
+            background-color: #10b981;
+        }
+        
+        .indicator.warning {
+            background-color: #f59e0b;
+        }
+        
+        .indicator.danger {
+            background-color: #ef4444;
+        }
+        
+        .goal-marker {
+            position: absolute;
+            top: -8px;
+            width: 2px;
+            height: 24px;
+            background-color: #0f766e;
+            z-index: 10;
+        }
+        
+        .goal-marker::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #0f766e;
+        }
+        
+        .goal-label {
+            position: absolute;
+            top: -30px;
+            transform: translateX(-50%);
+            background-color: #0f766e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #115e59 0%, #0d9488 100%);
+        }
+        
+        .metric-value {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.relative{position:relative}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-1{margin-left:0.25rem}.ml-3{margin-left:0.75rem}.mr-2{margin-right:0.5rem}.mr-3{margin-right:0.75rem}.mt-1{margin-top:0.25rem}.mt-6{margin-top:1.5rem}.flex{display:flex}.grid{display:grid}.h-10{height:2.5rem}.h-8{height:2rem}.w-10{width:2.5rem}.w-8{width:2rem}.min-w-full{min-width:100%}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.overflow-x-auto{overflow-x:auto}.rounded{border-radius:0.25rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.border-b{border-bottom-width:1px}.border-secondary-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.bg-primary-100{--tw-bg-opacity:1;background-color:rgb(204 251 241 / var(--tw-bg-opacity, 1))}.bg-primary-500{--tw-bg-opacity:1;background-color:rgb(20 184 166 / var(--tw-bg-opacity, 1))}.bg-primary-600{--tw-bg-opacity:1;background-color:rgb(13 148 136 / var(--tw-bg-opacity, 1))}.bg-secondary-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-secondary-50{--tw-bg-opacity:1;background-color:rgb(248 250 252 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-yellow-100{--tw-bg-opacity:1;background-color:rgb(254 249 195 / var(--tw-bg-opacity, 1))}.bg-opacity-20{--tw-bg-opacity:0.2}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.px-8{padding-left:2rem;padding-right:2rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.pb-12{padding-bottom:3rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.text-primary-100{--tw-text-opacity:1;color:rgb(204 251 241 / var(--tw-text-opacity, 1))}.text-primary-600{--tw-text-opacity:1;color:rgb(13 148 136 / var(--tw-text-opacity, 1))}.text-secondary-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-secondary-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-secondary-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-secondary-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-yellow-800{--tw-text-opacity:1;color:rgb(133 77 14 / var(--tw-text-opacity, 1))}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:bg-primary-700:hover{--tw-bg-opacity:1;background-color:rgb(15 118 110 / var(--tw-bg-opacity, 1))}.hover\:bg-opacity-30:hover{--tw-bg-opacity:0.3}@media (min-width: 768px){.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}</style></head>
+<body class="bg-secondary-50">
+    <div class="dashboard-header text-white py-6 px-8 mb-6">
+        <div class="container mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Dashboard Comercial</h1>
+                    <p class="text-primary-100 mt-1">Seguimiento de metas y ejecución</p>
+                </div>
+                <div class="text-sm flex items-center">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    Última actualización: <span id="lastUpdate" class="ml-1 font-medium">9 de mayo de 2025, 13:40</span>
+                    <button onclick="updateDate()" class="ml-3 bg-white bg-opacity-20 hover:bg-opacity-30 transition px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-sync-alt mr-2 text-xs"></i>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 pb-12">
+        <!-- Resumen General -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Tarjeta de Crédito -->
+            <div class="card bg-white p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center mr-3">
+                            <i class="fas fa-credit-card text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold text-secondary-800">Crédito</h2>
+                            <p class="text-sm text-secondary-500">Línea de negocio principal</p>
+                        </div>
+                    </div>
+                    <div id="creditIndicator" class="flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                        <div class="indicator warning mr-2"></div>
+                        <span id="creditStatus">En progreso</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-secondary-50 p-4 rounded-lg">
+                        <p class="text-xs text-secondary-500 uppercase font-medium mb-1">Meta</p>
+                        <p class="text-2xl font-bold text-secondary-800 metric-value">
+                            <span id="creditGoalDisplay">4.000</span>
+                        </p>
+                    </div>
+                    <div class="bg-secondary-50 p-4 rounded-lg">
+                        <p class="text-xs text-secondary-500 uppercase font-medium mb-1">Ejecutado</p>
+                        <p class="text-2xl font-bold text-primary-600 metric-value">
+                            <span id="creditExecutedDisplay">1.783</span>
+                        </p>
+                    </div>
+                    <div class="bg-secondary-50 p-4 rounded-lg">
+                        <p class="text-xs text-secondary-500 uppercase font-medium mb-1">% Avance</p>
+                        <p class="text-2xl font-bold text-secondary-800">
+                            <span id="creditPercentageDisplay">44.57</span>%
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-6 relative">
+                    <div class="progress-container">
+                        <div id="creditProgressBar" class="progress-bar bg-primary-500" style="width: 44.575%;"></div>
+                        <div class="goal-marker" style="left: 100%">
+                            <div class="goal-label">Meta</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between text-sm">
+                    <div>
+                        <span class="font-medium text-secondary-600">Editar ejecutado:</span> 
+                        <span id="creditExecuted" class="font-bold text-primary-600 editable px-2 py-1 bg-secondary-50 rounded" contenteditable="true" onblur="updateProgress('credit')">1783</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-secondary-600">Editar meta:</span> 
+                        <span id="creditGoal" class="font-bold text-secondary-800 editable px-2 py-1 bg-secondary-50 rounded" contenteditable="true" onblur="updateProgress('credit')">4000</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta de Factoring -->
+            <div class="card bg-white p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center mr-3">
+                            <i class="fas fa-file-invoice-dollar text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold text-secondary-800">Factoring</h2>
+                            <p class="text-sm text-secondary-500">Financiamiento a corto plazo</p>
+                        </div>
+                    </div>
+                    <div id="factoringIndicator" class="flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                        <div class="indicator warning mr-2"></div>
+                        <span id="factoringStatus">En progreso</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-secondary-50 p-4 rounded-lg">
+                        <p class="text-xs text-secondary-500 uppercase font-medium mb-1">Meta</p>
+                        <p class="text-2xl font-bold text-secondary-800 metric-value">
+                            <span id="factoringGoalDisplay">12.638</span>
+                        </p>
+                    </div>
+                    <div class="bg-secondary-50 p-4 rounded-lg">
+                        <p class="text-xs text-secondary-500 uppercase font-medium mb-1">Ejecutado</p>
+                        <p class="text-2xl font-bold text-primary-600 metric-value">
+                            <span id="factoringExecutedDisplay">5.131</span>
+                        </p>
+                    </div>
+                    <div class="bg-secondary-50 p-4 rounded-lg">
+                        <p class="text-xs text-secondary-500 uppercase font-medium mb-1">% Avance</p>
+                        <p class="text-2xl font-bold text-secondary-800">
+                            <span id="factoringPercentageDisplay">40.60</span>%
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-6 relative">
+                    <div class="progress-container">
+                        <div id="factoringProgressBar" class="progress-bar bg-primary-500" style="width: 40.5998%;"></div>
+                        <div class="goal-marker" style="left: 100%">
+                            <div class="goal-label">Meta</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between text-sm">
+                    <div>
+                        <span class="font-medium text-secondary-600">Editar ejecutado:</span> 
+                        <span id="factoringExecuted" class="font-bold text-primary-600 editable px-2 py-1 bg-secondary-50 rounded" contenteditable="true" onblur="updateProgress('factoring')">5131</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-secondary-600">Editar meta:</span> 
+                        <span id="factoringGoal" class="font-bold text-secondary-800 editable px-2 py-1 bg-secondary-50 rounded" contenteditable="true" onblur="updateProgress('factoring')">12638</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabla de Resumen -->
+        <div class="card bg-white p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center mr-3">
+                        <i class="fas fa-chart-line text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-secondary-800">Resumen de Desempeño</h2>
+                </div>
+                <button onclick="resetValues()" class="flex items-center bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded transition">
+                    <i class="fas fa-redo-alt mr-2"></i>
+                    Restablecer valores
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="bg-secondary-100 text-secondary-700">
+                            <th class="py-3 px-6 text-left font-semibold">Línea de negocio</th>
+                            <th class="py-3 px-6 text-right font-semibold">Meta</th>
+                            <th class="py-3 px-6 text-right font-semibold">Ejecutado</th>
+                            <th class="py-3 px-6 text-right font-semibold">% Avance</th>
+                            <th class="py-3 px-6 text-center font-semibold">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-secondary-200">
+                            <td class="py-4 px-6 font-medium text-secondary-800">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    Crédito
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-right font-medium text-secondary-800 metric-value" id="tableCreditGoal">4.000</td>
+                            <td class="py-4 px-6 text-right font-medium text-primary-600 metric-value" id="tableCreditExecuted">1.783</td>
+                            <td class="py-4 px-6 text-right font-bold" id="tableCreditPercentage">44.57%</td>
+                            <td class="py-4 px-6">
+                                <div class="flex justify-center">
+                                    <div id="tableCreditStatus" class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium flex items-center"><div class="indicator warning mr-2"></div>En progreso</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-6 font-medium text-secondary-800">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </div>
+                                    Factoring
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-right font-medium text-secondary-800 metric-value" id="tableFactoringGoal">12.638</td>
+                            <td class="py-4 px-6 text-right font-medium text-primary-600 metric-value" id="tableFactoringExecuted">5.131</td>
+                            <td class="py-4 px-6 text-right font-bold" id="tableFactoringPercentage">40.60%</td>
+                            <td class="py-4 px-6">
+                                <div class="flex justify-center">
+                                    <div id="tableFactoringStatus" class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium flex items-center"><div class="indicator warning mr-2"></div>En progreso</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-6 text-center text-sm text-secondary-500">
+                <p>Para actualizar los valores, haz clic en los campos editables y modifica los números.</p>
+                <p class="mt-1">Los cambios se reflejarán automáticamente en todo el dashboard.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Carga dinámica: declaración de variables
+let originalValues = {};
+
+// URL CSV publicado (cámbiala por la tuya)
+const csvURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTOqBPvqe7q_hBo1Mg0IhYjI7-jQFSWlo4EIi6r_3exE0vqmAyVkK7eH0icASgZSjzCQCeLvD4TURA5/pub?gid=0&single=true&output=csv';
+        
+        // Función para actualizar el progreso
+        function updateProgress(type) {
+            const executed = parseInt(document.getElementById(`${type}Executed`).innerText.replace(/,/g, '')) || 0;
+            const goal = parseInt(document.getElementById(`${type}Goal`).innerText.replace(/,/g, '')) || 1;
+            
+            // Calcular porcentaje con 2 decimales
+            let percentage = (executed / goal) * 100;
+            percentage = Math.min(100, percentage); // No permitir más del 100%
+            const formattedPercentage = percentage.toFixed(2);
+            
+            // Actualizar barra de progreso y porcentaje
+            document.getElementById(`${type}ProgressBar`).style.width = `${percentage}%`;
+            document.getElementById(`${type}PercentageDisplay`).innerText = formattedPercentage;
+            
+            // Actualizar displays formateados
+            document.getElementById(`${type}GoalDisplay`).innerText = goal.toLocaleString();
+            document.getElementById(`${type}ExecutedDisplay`).innerText = executed.toLocaleString();
+            
+            // Actualizar tabla
+            document.getElementById(`table${type.charAt(0).toUpperCase() + type.slice(1)}Goal`).innerText = 
+                goal.toLocaleString();
+            document.getElementById(`table${type.charAt(0).toUpperCase() + type.slice(1)}Executed`).innerText = 
+                executed.toLocaleString();
+            document.getElementById(`table${type.charAt(0).toUpperCase() + type.slice(1)}Percentage`).innerText = 
+                `${formattedPercentage}%`;
+            
+            // Actualizar indicador de estado
+            updateStatus(type, percentage);
+        }
+        
+        // Función para actualizar el estado
+        function updateStatus(type, percentage) {
+            let status, colorClass, indicatorClass;
+            
+            if (percentage >= 90) {
+                status = "Completado";
+                colorClass = "bg-green-100 text-green-800";
+                indicatorClass = "success";
+            } else if (percentage >= 60) {
+                status = "Avanzado";
+                colorClass = "bg-blue-100 text-blue-800";
+                indicatorClass = "success";
+            } else if (percentage >= 30) {
+                status = "En progreso";
+                colorClass = "bg-yellow-100 text-yellow-800";
+                indicatorClass = "warning";
+            } else {
+                status = "Inicial";
+                colorClass = "bg-red-100 text-red-800";
+                indicatorClass = "danger";
+            }
+            
+            // Actualizar en la tarjeta
+            document.getElementById(`${type}Status`).innerText = status;
+            const indicator = document.getElementById(`${type}Indicator`);
+            indicator.className = `flex items-center px-3 py-1 rounded-full ${colorClass}`;
+            indicator.querySelector('.indicator').className = `indicator ${indicatorClass} mr-2`;
+            
+            // Actualizar en la tabla
+            document.getElementById(`table${type.charAt(0).toUpperCase() + type.slice(1)}Status`).className = 
+                `px-3 py-1 rounded-full ${colorClass} text-xs font-medium flex items-center`;
+            document.getElementById(`table${type.charAt(0).toUpperCase() + type.slice(1)}Status`).innerHTML = 
+                `<div class="indicator ${indicatorClass} mr-2"></div>${status}`;
+        }
+        
+        // Función para restablecer valores originales
+        function resetValues() {
+            document.getElementById('creditGoal').innerText = originalValues.credit.goal;
+            document.getElementById('creditExecuted').innerText = originalValues.credit.executed;
+            document.getElementById('factoringGoal').innerText = originalValues.factoring.goal;
+            document.getElementById('factoringExecuted').innerText = originalValues.factoring.executed;
+            
+            updateProgress('credit');
+            updateProgress('factoring');
+            
+            // Efecto visual de confirmación
+            const button = document.querySelector('button[onclick="resetValues()"]');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-2"></i>Valores restablecidos';
+            button.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-600');
+            }, 1500);
+        }
+        
+        // Función para actualizar la fecha
+        function updateDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('lastUpdate').innerText = now.toLocaleDateString('es-ES', options);
+        }
+        function loadMetricsFromSheet() {
+  Papa.parse(csvURL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: results => {
+      results.data.forEach(row => {
+        originalValues[row.type] = {
+          goal:     parseInt(row.goal, 10)     || 0,
+          executed: parseInt(row.executed, 10) || 0
+        };
+      });
+      // Una vez cargado, inicializa tus métricas
+      updateProgress('credit');
+      updateProgress('factoring');
+    },
+    error: err => console.error('Error al leer el CSV:', err)
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateDate();             // tu función de fecha
+  loadMetricsFromSheet();   // carga valores desde la hoja
+});
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d354fad5d43ef0',t:'MTc0NjgxNjA5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe>
+</body></html>
