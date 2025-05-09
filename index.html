@@ -53,19 +53,25 @@
         }
         
         .progress-container {
-            height: 8px;
-            background-color: #e2e8f0;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
+    width: 100%;
+    height: 8px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    overflow: visible; /* Cambio clave */
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+    position: absolute; /* Cambio clave */
+    left: 0;
+    top: 0;
+    background-color: #14b8a6; /* Color base */
+}
         
-        .progress-bar {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 1s ease;
-            position: relative;
-        }
+        
         
         .progress-bar::after {
             content: '';
@@ -385,8 +391,8 @@ const csvURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1UzoIutpauf1YW
         
         // Función para actualizar el progreso
         function updateProgress(type) {
-            const executed = parseInt(document.getElementById(`${type}Executed`).innerText.replace(/,/g, '')) || 0;
-            const goal = parseInt(document.getElementById(`${type}Goal`).innerText.replace(/,/g, '')) || 1;
+            const executed = parseFloat(document.getElementById(`${type}Executed`).innerText.replace(/[^0-9.]/g, '')) || 0;
+            const goal = parseFloat(document.getElementById(`${type}Goal`).innerText.replace(/[^0-9.]/g, '')) || 1;
             
             // Calcular porcentaje con 2 decimales
             let percentage = (executed / goal) * 100;
@@ -482,48 +488,48 @@ const csvURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1UzoIutpauf1YW
             };
             document.getElementById('lastUpdate').innerText = now.toLocaleDateString('es-ES', options);
         }
-        function loadMetricsFromSheet() {
-    Papa.parse(csvURL, {
-        download: true,
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-            document.getElementById('loadingMessage').style.display = 'none';
-            
-            // Validar estructura del CSV
-            if (!results.data[0]?.type || !results.data[0]?.Meta) {
-                alert("Error: El CSV debe tener columnas 'type', 'Meta' y 'Ejecutado'");
-                return;
-            }
+       function loadMetricsFromSheet() {
+  Papa.parse(csvURL, {
+    download: true,
+    header: true,
+    dynamicTyping: true,
+    skipEmptyLines: true,
+    complete: results => {
+      document.getElementById('loadingMessage').style.display = 'none';
+      
+      // Validar estructura del CSV (¡ESTA ES LA LÍNEA CLAVE!)
+      if (!results.data[0]?.type || !results.data[0]?.Meta) {
+        alert("Error: El CSV debe tener columnas 'type', 'Meta' y 'Ejecutado'");
+        return;
+      }
 
-            // Asignar valores según el type
-            results.data.forEach(row => {
-                if (row.type === 'credit' || row.type === 'factoring') {
-                    document.getElementById(`${row.type}Goal`).textContent = row.Meta;
-                    document.getElementById(`${row.type}Executed`).textContent = row.Ejecutado;
-                    updateProgress(row.type);
-                }
-            });
-
-            // Guardar valores originales
-            originalValues = {
-                credit: {
-                    goal: document.getElementById('creditGoal').textContent,
-                    executed: document.getElementById('creditExecuted').textContent
-                },
-                factoring: {
-                    goal: document.getElementById('factoringGoal').textContent,
-                    executed: document.getElementById('factoringExecuted').textContent
-                }
-            };
-        },
-        error: (err) => {
-            document.getElementById('loadingMessage').style.display = 'none';
-            console.error("Error:", err);
-            alert("¡Error al cargar datos! Verifica la conexión.");
+      // Asignar valores desde el CSV (CAMBIOS AQUÍ)
+      results.data.forEach(row => {
+        if (row.type === 'credit' || row.type === 'factoring') {
+          document.getElementById(`${row.type}Goal`).textContent = row.Meta; // Usar "Meta"
+          document.getElementById(`${row.type}Executed`).textContent = row.Ejecutado; // Usar "Ejecutado"
+          updateProgress(row.type);
         }
-    });
+      });
+
+      // Guardar valores originales (ESTO YA LO TIENES BIEN)
+      originalValues = {
+        credit: {
+          goal: document.getElementById('creditGoal').textContent,
+          executed: document.getElementById('creditExecuted').textContent
+        },
+        factoring: {
+          goal: document.getElementById('factoringGoal').textContent,
+          executed: document.getElementById('factoringExecuted').textContent
+        }
+      };
+    },
+    error: err => {
+      document.getElementById('loadingMessage').style.display = 'none';
+      console.error("Error:", err);
+      alert("¡Error al cargar datos! Verifica la conexión.");
+    }
+  });
 }
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d354fad5d43ef0',t:'MTc0NjgxNjA5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe>
